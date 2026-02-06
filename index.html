@@ -66,13 +66,13 @@
       line-height: 1.2;
     }
 
-    /* OHRANIČENÁ ZÓNA PRE TLAČIDLÁ (150px) */
     .button-zone {
       position: relative;
       width: 100%;
       height: 150px;
       margin-top: 20px;
       touch-action: none;
+      /* border: 1px dashed rgba(0,0,0,0.1); // Odkomentuj pre ladenie hraníc */
     }
 
     button {
@@ -105,7 +105,7 @@
       color: #111827;
       z-index: 20;
       width: 80px;
-      transition: left 0.15s ease-out, top 0.15s ease-out;
+      /* Transition odstránená pre plynulý fyzikálny pohyb cez JS */
     }
 
     .hint {
@@ -156,7 +156,6 @@
     const quizContent = document.getElementById("quiz-content");
     const canvas = document.getElementById("confettiCanvas");
 
-    /* --- CANVAS SETUP --- */
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -165,65 +164,69 @@
     resizeCanvas();
     const confettiInstance = confetti.create(canvas, { resize: true });
 
-    /* --- POMOCNÉ FUNKCIE --- */
+    // FYZIKÁLNE PREMENNÉ
+    let btnPosX = 0; // Tieto sa nastavia v init
+    let btnPosY = 0;
+    let yesScale = 1;
+    const repulsionRadius = 120; // Vzdialenosť, kedy začne utekať
+
+    // Inicializácia pozície tlačidla
+    function initPositions() {
+      const zRect = zone.getBoundingClientRect();
+      const bRect = noBtn.getBoundingClientRect();
+      btnPosX = bRect.left - zRect.left;
+      btnPosY = bRect.top - zRect.top;
+      noBtn.style.left = btnPosX + "px";
+      noBtn.style.top = btnPosY + "px";
+      noBtn.style.transform = "none";
+    }
+    window.onload = initPositions;
+
     function clamp(n, min, max) {
       return Math.max(min, Math.min(max, n));
     }
 
-    let yesScale = 1;
     function growYes() {
-      yesScale = Math.min(2.5, yesScale + 0.15);
+      yesScale = Math.min(2.8, yesScale + 0.05); // Pomalšie, ale vytrvalé zväčšovanie
       yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
     }
 
-    /* --- VEKTOROVÝ ÚTEK (Z POČIATOČNÉHO KÓDU) --- */
-    function moveNo(mouseX, mouseY) {
+    // Plynulý update pozície
+    document.addEventListener("pointermove", e => {
       const zRect = zone.getBoundingClientRect();
       const bRect = noBtn.getBoundingClientRect();
-
-      let dx = (bRect.left + bRect.width / 2) - mouseX;
-      let dy = (bRect.top + bRect.height / 2) - mouseY;
       
-      let mag = Math.hypot(dx, dy) || 1;
-      dx /= mag;
-      dy /= mag;
+      const btnCenterX = bRect.left + bRect.width / 2;
+      const btnCenterY = bRect.top + bRect.height / 2;
 
-      // Sila odsunutia 150px
-      let newLeft = (bRect.left - zRect.left) + dx * 150;
-      let newTop  = (bRect.top - zRect.top) + dy * 150;
+      const dx = btnCenterX - e.clientX;
+      const dy = btnCenterY - e.clientY;
+      const distance = Math.hypot(dx, dy);
 
-      // Udržanie vnútri 150px button-zone
-      newLeft = clamp(newLeft, 0, zRect.width - bRect.width);
-      newTop  = clamp(newTop, 0, zRect.height - bRect.height);
+      if (distance < repulsionRadius) {
+        // VÝPOČET SILY: Čím bližšie, tým väčšia sila (Power 2)
+        const force = Math.pow((repulsionRadius - distance) / repulsionRadius, 2) * 20;
+        
+        const angle = Math.atan2(dy, dx);
+        const moveX = Math.cos(angle) * force * 15;
+        const moveY = Math.sin(angle) * force * 15;
 
-      noBtn.style.left = newLeft + "px";
-      noBtn.style.top = newTop + "px";
-      noBtn.style.transform = "none";
+        btnPosX = clamp(btnPosX + moveX, 0, zRect.width - bRect.width);
+        btnPosY = clamp(btnPosY + moveY, 0, zRect.height - bRect.height);
 
-      growYes();
-    }
-
-    /* --- EVENTY --- */
-    document.addEventListener("pointermove", e => {
-      const b = noBtn.getBoundingClientRect();
-      const dist = Math.hypot((b.left + b.width / 2) - e.clientX, (b.top + b.height / 2) - e.clientY);
-
-      if (dist < 130) {
-        moveNo(e.clientX, e.clientY);
+        noBtn.style.left = btnPosX + "px";
+        noBtn.style.top = btnPosY + "px";
+        
+        growYes();
       }
     });
 
     noBtn.addEventListener("click", e => e.preventDefault());
 
-    /* --- FINÁLNE KLIKNUTIE NA ÁNO --- */
     yesBtn.addEventListener("click", () => {
-      // TU SA SCHOVÁ ÚPLNE VŠETKO (OBRÁZOK, TEXT, BUTTONY, HINT)
       quizContent.style.display = "none";
-      
-      // ZOBRAZÍ SA VÝSLEDOK
       result.style.display = "block";
       
-      // KONFETY
       const duration = 3000;
       const animationEnd = Date.now() + duration;
       (function frame() {
