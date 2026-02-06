@@ -48,6 +48,7 @@
       box-shadow: 0 18px 60px rgba(0,0,0,.15);
       position: relative;
       z-index: 1;
+      overflow: hidden;
     }
 
     .art {
@@ -65,12 +66,13 @@
       line-height: 1.2;
     }
 
+    /* OHRANIČENÁ ZÓNA PRE TLAČIDLÁ (150px) */
     .button-zone {
       position: relative;
       width: 100%;
-      height: 150px; /* Striktne definovaná výška z počiatočného kódu */
+      height: 150px;
       margin-top: 20px;
-      touch-action: none; /* Dôležité pre mobily */
+      touch-action: none;
     }
 
     button {
@@ -84,7 +86,7 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       white-space: nowrap;
-      position: absolute; /* Obe tlačidlá sú absolute v zóne */
+      position: absolute;
       top: 50%;
       transform: translateY(-50%);
     }
@@ -102,8 +104,14 @@
       background: #e5e7eb;
       color: #111827;
       z-index: 20;
-      /* Plynulý pohyb pri odpudzovaní */
+      width: 80px;
       transition: left 0.15s ease-out, top 0.15s ease-out;
+    }
+
+    .hint {
+      margin-top: 15px;
+      font-size: 13px;
+      opacity: .7;
     }
 
     .result {
@@ -122,33 +130,33 @@
   <canvas id="confettiCanvas"></canvas>
 
   <main class="card">
-  <div id="quiz-wrapper">
-    <img src="valentin.png" alt="Valentínska ilustrácia" class="art">
-    <div id="main-content">
+    <div id="quiz-content">
+      <img src="valentin.png" alt="Valentínska ilustrácia" class="art">
       <h1>Kikuš, budeš moja Valentínka?</h1>
+      
       <section class="button-zone" id="zone">
         <button id="yesBtn">Áno</button>
         <button id="noBtn">Nie</button>
       </section>
-    </div>
-    <div class="hint" id="hint">Skús kliknúť na „Nie“ ak si trúfaš... 😈</div>
-  </div>
 
-  <section class="result" id="result">
-    <h2 style="font-size: 32px; margin-bottom: 20px; color: #ff3b7a;">VEDEL SOM TO! ❤️ 🎉</h2>
-    <img style="width: 100%; border-radius: 12px;" src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDRqc2k0ODc1NnQxMmRkajBnYmNrZnZ1b2phZ2VqaW8zM3R1dTBjdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iyN7EivGQSUxi/giphy.gif" alt="Celebration">
-  </section>
-</main>
+      <div class="hint" id="hint">Skús kliknúť na „Nie“ ak si trúfaš... 😈</div>
+    </div>
+
+    <section class="result" id="result">
+      <h2 style="font-size: 32px; margin-bottom: 20px; color: #ff3b7a;">VEDEL SOM TO! ❤️ 🎉</h2>
+      <img style="width: 100%; border-radius: 12px;" src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDRqc2k0ODc1NnQxMmRkajBnYmNrZnZ1b2phZ2VqaW8zM3R1dTBjdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iyN7EivGQSUxi/giphy.gif" alt="Celebration">
+    </section>
+  </main>
 
   <script>
     const zone = document.getElementById("zone");
     const noBtn = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
     const result = document.getElementById("result");
-    const mainContent = document.getElementById("main-content");
+    const quizContent = document.getElementById("quiz-content");
     const canvas = document.getElementById("confettiCanvas");
 
-    /* --- NASTAVENIE CANVASU --- */
+    /* --- CANVAS SETUP --- */
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -164,69 +172,66 @@
 
     let yesScale = 1;
     function growYes() {
-      yesScale = Math.min(2.5, yesScale + 0.1);
+      yesScale = Math.min(2.5, yesScale + 0.15);
       yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
     }
 
-    /* --- LOGIKA VEKTOROVÉHO ÚTEKU (Z POČIATOČNÉHO KÓDU) --- */
+    /* --- VEKTOROVÝ ÚTEK (Z POČIATOČNÉHO KÓDU) --- */
     function moveNo(mouseX, mouseY) {
       const zRect = zone.getBoundingClientRect();
       const bRect = noBtn.getBoundingClientRect();
 
-      // Vektor od myši k stredu tlačidla
       let dx = (bRect.left + bRect.width / 2) - mouseX;
       let dy = (bRect.top + bRect.height / 2) - mouseY;
       
-      // Normalizácia vektora (aby útek nebol príliš agresívny)
       let mag = Math.hypot(dx, dy) || 1;
       dx /= mag;
       dy /= mag;
 
-      // Nová pozícia: aktuálna pozícia v zóne + smer úteku (150px skok)
+      // Sila odsunutia 150px
       let newLeft = (bRect.left - zRect.left) + dx * 150;
       let newTop  = (bRect.top - zRect.top) + dy * 150;
 
-      // Clamp - držanie tlačidla vnútri .button-zone
+      // Udržanie vnútri 150px button-zone
       newLeft = clamp(newLeft, 0, zRect.width - bRect.width);
       newTop  = clamp(newTop, 0, zRect.height - bRect.height);
 
       noBtn.style.left = newLeft + "px";
       noBtn.style.top = newTop + "px";
-      noBtn.style.transform = "none"; // Zrušíme centrovanie z CSS
+      noBtn.style.transform = "none";
 
       growYes();
     }
 
     /* --- EVENTY --- */
-    zone.addEventListener("pointermove", e => {
+    document.addEventListener("pointermove", e => {
       const b = noBtn.getBoundingClientRect();
-      const distance = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top + b.height / 2) - e.clientY
-      );
+      const dist = Math.hypot((b.left + b.width / 2) - e.clientX, (b.top + b.height / 2) - e.clientY);
 
-      // Ak je myš v dosahu 140px, odtlač tlačidlo
-      if (distance < 140) {
+      if (dist < 130) {
         moveNo(e.clientX, e.clientY);
       }
     });
 
-    // Poistka: Nie sa nedá kliknúť
     noBtn.addEventListener("click", e => e.preventDefault());
 
+    /* --- FINÁLNE KLIKNUTIE NA ÁNO --- */
     yesBtn.addEventListener("click", () => {
-      mainContent.style.display = "none";
+      // TU SA SCHOVÁ ÚPLNE VŠETKO (OBRÁZOK, TEXT, BUTTONY, HINT)
+      quizContent.style.display = "none";
+      
+      // ZOBRAZÍ SA VÝSLEDOK
       result.style.display = "block";
       
-      // Ohňostroj konfiet
+      // KONFETY
       const duration = 3000;
       const animationEnd = Date.now() + duration;
       (function frame() {
         const timeLeft = animationEnd - Date.now();
         if (timeLeft <= 0) return;
         confettiInstance({
-          particleCount: 10,
-          spread: 70,
+          particleCount: 12,
+          spread: 80,
           origin: { x: Math.random(), y: Math.random() - 0.2 }
         });
         requestAnimationFrame(frame);
@@ -235,4 +240,3 @@
   </script>
 </body>
 </html>
-
