@@ -122,8 +122,8 @@
   <canvas id="confettiCanvas"></canvas>
 
   <main class="card">
+  <div id="quiz-wrapper">
     <img src="valentin.png" alt="Valentínska ilustrácia" class="art">
-
     <div id="main-content">
       <h1>Kikuš, budeš moja Valentínka?</h1>
       <section class="button-zone" id="zone">
@@ -131,12 +131,14 @@
         <button id="noBtn">Nie</button>
       </section>
     </div>
+    <div class="hint" id="hint">Skús kliknúť na „Nie“ ak si trúfaš... 😈</div>
+  </div>
 
-    <section class="result" id="result">
-      <h2 style="font-size: 32px; margin-bottom: 20px; color: #ff3b7a;">VEDEL SOM TO! ❤️ 🎉</h2>
-      <img style="width: 100%; border-radius: 12px;" src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDRqc2k0ODc1NnQxMmRkajBnYmNrZnZ1b2phZ2VqaW8zM3R1dTBjdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iyN7EivGQSUxi/giphy.gif" alt="Celebration">
-    </section>
-  </main>
+  <section class="result" id="result">
+    <h2 style="font-size: 32px; margin-bottom: 20px; color: #ff3b7a;">VEDEL SOM TO! ❤️ 🎉</h2>
+    <img style="width: 100%; border-radius: 12px;" src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDRqc2k0ODc1NnQxMmRkajBnYmNrZnZ1b2phZ2VqaW8zM3R1dTBjdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iyN7EivGQSUxi/giphy.gif" alt="Celebration">
+  </section>
+</main>
 
   <script>
     const zone = document.getElementById("zone");
@@ -233,3 +235,4 @@
   </script>
 </body>
 </html>
+
